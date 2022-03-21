@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package bun;
+
+option go_package = "github.com/moodyhunter/protoc-gen-bun/options;bun";
+
+import "google/protobuf/descriptor.proto";
+
+// TODO: The option number 52120 lies within the internally reserved extension
+// range. I believe a publicly unique number should be requested.
+
+// Validation rules applied at the message level
+extend google.protobuf.MessageOptions
+{
+    BUNMessageOptions opts = 52120;
+}
+
+message BUNMessageOptions
+{
+    bool ormable = 1;
+    string table = 2;
+}
+
+// Field level specifications
+extend google.protobuf.FieldOptions
+{
+    BUNFieldOptions field = 52120;
+}
+
+message BUNFieldOptions
+{
+    string column = 1;
+    string dbtype = 2;
+    bool primary_key = 3;
+    bool unique = 4;
+    string default = 5;
+    bool not_null = 6;
+    bool auto_increment = 7;
+    string embed_prefix = 8;
+}

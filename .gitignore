@@ -19,4 +19,4 @@ trigger-travis.sh
 # IDE-specific settings files
 .idea
 
-/protoc-gen-gorm
+/protoc-gen-bun
