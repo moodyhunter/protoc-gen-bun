@@ -488,6 +488,9 @@ func (b *ORMBuilder) parseBasicFields(msg *protogen.Message, g *protogen.Generat
 
 			if v, ok := wellKnownTypes[rawType]; ok {
 				fieldType = v
+			} else if rawType == protoTypeTimestamp {
+				typePackage = stdTimeImport
+				fieldType = "*" + generateImport("Time", stdTimeImport, g)
 			}
 		}
 
