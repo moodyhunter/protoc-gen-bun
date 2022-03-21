@@ -9,43 +9,40 @@ import "google/protobuf/descriptor.proto";
 // TODO: The option number 52119 lies within the internally reserved extension
 // range. I believe a publicly unique number should be requested.
 
-// Currently no file options
-extend google.protobuf.FileOptions {
-  GormFileOptions file_opts = 52119;
-}
-
-message GormFileOptions {
-}
-
 // Validation rules applied at the message level
-extend google.protobuf.MessageOptions {
+extend google.protobuf.MessageOptions
+{
     // ormable will cause orm code to be generated for this message/object
     GormMessageOptions opts = 52119;
 }
 
-message GormMessageOptions {
-  bool ormable = 1;
-  repeated ExtraField include = 2;
-  string table = 3;
-  bool multi_account = 4;
+message GormMessageOptions
+{
+    bool ormable = 1;
+    repeated ExtraField include = 2;
+    string table = 3;
 }
 
-message ExtraField {
-  string type = 1;
-  string name = 2;
-  GormTag tag = 3;
-  string package = 4;
+message ExtraField
+{
+    string type = 1;
+    string name = 2;
+    GormTag tag = 3;
+    string package = 4;
 }
 
 // Field level specifications
-extend google.protobuf.FieldOptions {
+extend google.protobuf.FieldOptions
+{
     GormFieldOptions field = 52119;
 }
 
-message GormFieldOptions {
+message GormFieldOptions
+{
     GormTag tag = 1;
     bool drop = 2;
-    oneof association {
+    oneof association
+    {
         HasOneOptions has_one = 3;
         BelongsToOptions belongs_to = 4;
         HasManyOptions has_many = 5;
@@ -54,7 +51,8 @@ message GormFieldOptions {
     string reference_of = 7;
 }
 
-message GormTag {
+message GormTag
+{
     string column = 1;
     string type = 2;
     int32 size = 3;
@@ -80,7 +78,8 @@ message GormTag {
     bool preload = 23;
 }
 
-message HasOneOptions {
+message HasOneOptions
+{
     string foreignkey = 1;
     GormTag foreignkey_tag = 2;
     string association_foreignkey = 3;
@@ -93,7 +92,8 @@ message HasOneOptions {
     bool clear = 10;
 }
 
-message BelongsToOptions {
+message BelongsToOptions
+{
     string foreignkey = 1;
     GormTag foreignkey_tag = 2;
     string association_foreignkey = 3;
@@ -103,7 +103,8 @@ message BelongsToOptions {
     bool preload = 7;
 }
 
-message HasManyOptions {
+message HasManyOptions
+{
     string foreignkey = 1;
     GormTag foreignkey_tag = 2;
     string association_foreignkey = 3;
@@ -118,7 +119,8 @@ message HasManyOptions {
     bool clear = 12;
 }
 
-message ManyToManyOptions {
+message ManyToManyOptions
+{
     string jointable = 1;
     string foreignkey = 2;
     string jointable_foreignkey = 3;
@@ -133,22 +135,12 @@ message ManyToManyOptions {
     bool clear = 13;
 }
 
-
-// To be used in (leiu of) the interceptor
-extend google.protobuf.ServiceOptions {
-  AutoServerOptions server = 52119;
+extend google.protobuf.MethodOptions
+{
+    MethodOptions method = 52119;
 }
 
-message AutoServerOptions {
-  bool autogen = 1;
-  bool txn_middleware = 2;
-  bool with_tracing = 3;
-}
-
-extend google.protobuf.MethodOptions {
-  MethodOptions method = 52119;
-}
-
-message MethodOptions {
-  string object_type = 1;
+message MethodOptions
+{
+    string object_type = 1;
 }

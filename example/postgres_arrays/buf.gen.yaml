@@ -1,8 +1,0 @@
-version: v1beta1
-plugins:
-  - name: go
-    out: example
-    opt: paths=source_relative
-  - name: gorm
-    out: example
-    opt: engine=postgres,paths=source_relative,enums=string,gateway=true:./example/postgres_arrays
