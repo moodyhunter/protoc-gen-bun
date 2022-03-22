@@ -261,8 +261,12 @@ func (b *ORMBuilder) Generate() (*pluginpb.CodeGeneratorResponse, error) {
 			}
 		}
 	}
+	resp := b.plugin.Response()
 
-	return b.plugin.Response(), nil
+	var SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
+	resp.SupportedFeatures = proto.Uint64(SupportedFeatures)
+
+	return resp, nil
 }
 
 func (b *ORMBuilder) generateConvertFunctions(g *protogen.GeneratedFile, message *protogen.Message) {
