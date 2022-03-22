@@ -20,10 +20,10 @@ var (
 
 var (
 	uuidImport      = "github.com/satori/go.uuid"
-	pqImport        = "github.com/lib/pq"
 	timestampImport = "google.golang.org/protobuf/types/known/timestamppb"
 	wktImport       = "google.golang.org/protobuf/types/known/wrapperspb"
 	bunImport       = "github.com/uptrace/bun"
+	protoImport     = "google.golang.org/protobuf/proto"
 	stdTimeImport   = "time"
 	bigintImport    = "math/big"
 )
@@ -75,7 +75,6 @@ type ORMBuilder struct {
 	messages       map[string]struct{}
 	currentFile    string
 	currentPackage string
-	dbEngine       int
 	stringEnums    bool
 	suppressWarn   bool
 }
@@ -93,12 +92,6 @@ func New(opts protogen.Options, request *pluginpb.CodeGeneratorRequest) (*ORMBui
 	}
 
 	params := parseParameter(request.GetParameter())
-
-	if strings.EqualFold(params["engine"], "postgres") {
-		builder.dbEngine = ENGINE_POSTGRES
-	} else {
-		builder.dbEngine = ENGINE_UNSET
-	}
 
 	if strings.EqualFold(params["enums"], "string") {
 		builder.stringEnums = true
@@ -455,30 +448,12 @@ func (b *ORMBuilder) parseBasicFields(msg *protogen.Message, g *protogen.Generat
 			bunOptions = &bun.BUNFieldOptions{}
 		}
 
-		tag := bunOptions
 		fieldName := camelCase(string(fd.Name()))
 		fieldType := fd.Kind().String()
 
 		var typePackage string
 
-		if b.dbEngine == ENGINE_POSTGRES && b.IsAbleToMakePQArray(fieldType) && field.Desc.IsList() {
-			switch fieldType {
-			case "bool":
-				fieldType = generateImport("BoolArray", pqImport, g)
-				bunOptions = tagWithType(tag, "bool[]")
-			case "double":
-				fieldType = generateImport("Float64Array", pqImport, g)
-				bunOptions = tagWithType(tag, "float[]")
-			case "int64":
-				fieldType = generateImport("Int64Array", pqImport, g)
-				bunOptions = tagWithType(tag, "integer[]")
-			case "string":
-				fieldType = generateImport("StringArray", pqImport, g)
-				bunOptions = tagWithType(tag, "text[]")
-			default:
-				continue
-			}
-		} else if (field.Message == nil || !b.isOrmable(fieldType)) && field.Desc.IsList() {
+		if (field.Message == nil || !b.isOrmable(fieldType)) && field.Desc.IsList() {
 			// not implemented
 			continue
 		} else if field.Enum != nil {
@@ -671,9 +646,7 @@ func (b *ORMBuilder) renderBUNTag(field *Field) string {
 }
 
 // Output code that will convert a field to/from orm.
-func (b *ORMBuilder) generateFieldConversion(message *protogen.Message, field *protogen.Field,
-	toORM bool, ofield *Field, g *protogen.GeneratedFile) error {
-
+func (b *ORMBuilder) generateFieldConversion(message *protogen.Message, field *protogen.Field, toORM bool, ofield *Field, g *protogen.GeneratedFile) error {
 	fieldName := camelCase(string(field.Desc.Name()))
 	fieldType := field.Desc.Kind().String() // was GoType
 	if field.Desc.Message() != nil {
@@ -681,22 +654,7 @@ func (b *ORMBuilder) generateFieldConversion(message *protogen.Message, field *p
 		fieldType = parts[len(parts)-1]
 	}
 	if field.Desc.Cardinality() == protoreflect.Repeated {
-		// Some repeated fields can be handled by github.com/lib/pq
-		if b.dbEngine == ENGINE_POSTGRES && b.IsAbleToMakePQArray(fieldType) && field.Desc.IsList() {
-			g.P(`if m.`, fieldName, ` != nil {`)
-			switch fieldType {
-			case "bool":
-				g.P(`to.`, fieldName, ` = make(`, generateImport("BoolArray", pqImport, g), `, len(m.`, fieldName, `))`)
-			case "double":
-				g.P(`to.`, fieldName, ` = make(`, generateImport("Float64Array", pqImport, g), `, len(m.`, fieldName, `))`)
-			case "int64":
-				g.P(`to.`, fieldName, ` = make(`, generateImport("Int64Array", pqImport, g), `, len(m.`, fieldName, `))`)
-			case "string":
-				g.P(`to.`, fieldName, ` = make(`, generateImport("StringArray", pqImport, g), `, len(m.`, fieldName, `))`)
-			}
-			g.P(`copy(to.`, fieldName, `, m.`, fieldName, `)`)
-			g.P(`}`)
-		} else if b.isOrmable(fieldType) { // Repeated ORMable type
+		if b.isOrmable(fieldType) { // Repeated ORMable type
 			//fieldType = strings.Trim(fieldType, "[]*")
 
 			g.P(`for _, v := range m.`, fieldName, ` {`)
@@ -774,8 +732,19 @@ func (b *ORMBuilder) generateFieldConversion(message *protogen.Message, field *p
 			g.P(`to.`, fieldName, ` = &temp`, fieldName)
 			g.P(`}`)
 		}
-	} else { // Singular raw ----------------------------------------------------
-		g.P(`to.`, fieldName, ` = m.`, fieldName)
+	} else {
+		// Singular raw ----------------------------------------------------
+		if field.Desc.HasOptionalKeyword() {
+			if toORM {
+				g.P(`if m.`, fieldName, ` != nil {`)
+				g.P(`to.`, fieldName, ` = m.Get`, fieldName, `()`)
+				g.P(`}`)
+			} else {
+				g.P(`to.`, fieldName, ` = `, generateImport(camelCase(fieldType), protoImport, g), `(m.`, fieldName, `)`)
+			}
+		} else {
+			g.P(`to.`, fieldName, ` = m.`, fieldName)
+		}
 	}
 	return nil
 }
