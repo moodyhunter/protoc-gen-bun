@@ -497,7 +497,7 @@ func getFieldOptions(options *descriptorpb.FieldOptions) *bun.BUNFieldOptions {
 		return nil
 	}
 
-	v := proto.GetExtension(options, bun.E_Field)
+	v := proto.GetExtension(options, bun.E_BunField)
 	if v == nil {
 		return nil
 	}
@@ -515,7 +515,7 @@ func getMessageOptions(message *protogen.Message) *bun.BUNMessageOptions {
 	if options == nil {
 		return nil
 	}
-	v := proto.GetExtension(options, bun.E_Opts)
+	v := proto.GetExtension(options, bun.E_BunOpts)
 	if v == nil {
 		return nil
 	}
@@ -532,7 +532,7 @@ func isOrmable(message *protogen.Message) bool {
 	desc := message.Desc
 	options := desc.Options()
 
-	m, ok := proto.GetExtension(options, bun.E_Opts).(*bun.BUNMessageOptions)
+	m, ok := proto.GetExtension(options, bun.E_BunOpts).(*bun.BUNMessageOptions)
 	if !ok || m == nil {
 		return false
 	}

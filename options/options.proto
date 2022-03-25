@@ -8,24 +8,11 @@ import "google/protobuf/descriptor.proto";
 
 // TODO: The option number 52120 lies within the internally reserved extension
 // range. I believe a publicly unique number should be requested.
-
-// Validation rules applied at the message level
-extend google.protobuf.MessageOptions
-{
-    BUNMessageOptions opts = 52120;
-}
-
 message BUNMessageOptions
 {
     bool ormable = 1;
     string table = 2;
-}
-
-// Field level specifications
-extend google.protobuf.FieldOptions
-{
-    BUNFieldOptions field = 52120;
-}
+};
 
 message BUNFieldOptions
 {
@@ -37,4 +24,14 @@ message BUNFieldOptions
     bool not_null = 6;
     bool auto_increment = 7;
     string embed_prefix = 8;
+};
+
+extend google.protobuf.MessageOptions
+{
+    BUNMessageOptions bun_opts = 52120;
+}
+
+extend google.protobuf.FieldOptions
+{
+    BUNFieldOptions bun_field = 52120;
 }
